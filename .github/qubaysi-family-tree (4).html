@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>شجرة القبيسي</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0c0f;--surface:#13181f;--surface2:#1a2030;--border:#2a3344;
+  --gold:#c9a84c;--gold-light:#e8c97a;--gold-dim:rgba(201,168,76,0.12);--gold-glow:rgba(201,168,76,0.25);
+  --text:#e6edf3;--text-muted:#7a8899;--green:#3fb950;--red:#f85149;--blue:#58a6ff;--radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(201,168,76,0.06) 0%,transparent 70%),
+  radial-gradient(1px 1px at 15% 20%,rgba(201,168,76,0.5) 0%,transparent 100%),
+  radial-gradient(1px 1px at 70% 30%,rgba(201,168,76,0.3) 0%,transparent 100%),
+  radial-gradient(2px 2px at 25% 75%,rgba(201,168,76,0.2) 0%,transparent 100%);}
+
+/* SYNC BAR */
+#sync-bar{position:fixed;top:0;left:0;right:0;z-index:999;padding:5px 16px;font-size:12px;text-align:center;transition:all 0.3s;}
+#sync-bar.syncing{background:rgba(201,168,76,0.12);color:var(--gold);border-bottom:1px solid var(--gold-dim);}
+#sync-bar.ok{background:rgba(63,185,80,0.1);color:var(--green);border-bottom:1px solid rgba(63,185,80,0.2);}
+#sync-bar.err{background:rgba(248,81,73,0.1);color:var(--red);border-bottom:1px solid rgba(248,81,73,0.2);}
+
+header{position:relative;z-index:10;padding:18px 28px;margin-top:28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(10,12,15,0.9);backdrop-filter:blur(16px);}
+.logo{display:flex;align-items:center;gap:14px;}
+.logo-icon{width:48px;height:48px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 20px var(--gold-glow);}
+.logo h1{font-family:'Amiri',serif;font-size:28px;color:var(--gold-light);}
+.logo-sub{font-size:11px;color:var(--text-muted);margin-top:3px;}
+.header-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;border:none;cursor:pointer;font-family:'Tajawal',sans-serif;font-size:14px;font-weight:500;transition:all 0.2s;}
+.btn-primary{background:var(--gold);color:#0a0c0f;}
+.btn-primary:hover{background:var(--gold-light);transform:translateY(-1px);box-shadow:0 4px 16px var(--gold-glow);}
+.btn-outline{background:transparent;color:var(--gold);border:1px solid var(--gold);}
+.btn-outline:hover{background:var(--gold-dim);}
+.btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);border-color:var(--text-muted);}
+.btn-danger{background:rgba(248,81,73,0.1);color:var(--red);border:1px solid rgba(248,81,73,0.3);}
+.btn-sm{padding:6px 12px;font-size:13px;}
+.tabs{position:relative;z-index:10;display:flex;border-bottom:1px solid var(--border);padding:0 28px;background:rgba(10,12,15,0.7);overflow-x:auto;}
+.tab{padding:14px 18px;cursor:pointer;font-size:14px;color:var(--text-muted);border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.tab:hover:not(.active){color:var(--text);}
+.view{display:none;padding:24px;position:relative;z-index:5;}
+.view.active{display:block;}
+#tree-container{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:auto;min-height:400px;padding:28px 16px;}
+.tree-node{display:flex;flex-direction:column;align-items:center;}
+.tree-node-connector{height:20px;width:2px;background:linear-gradient(to bottom,var(--gold),var(--border));margin:0 auto;}
+.member-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;min-width:130px;text-align:center;cursor:pointer;transition:all 0.25s;}
+.member-card:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 8px 24px var(--gold-glow);}
+.member-avatar{width:44px;height:44px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;background:var(--gold-dim);border:2px solid var(--gold);color:var(--gold-light);}
+.member-avatar.male{background:rgba(88,166,255,0.1);border-color:var(--blue);color:var(--blue);}
+.member-avatar.female{background:rgba(245,160,181,0.1);border-color:#f5a0b5;color:#f5a0b5;}
+.member-photo{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);display:block;margin:0 auto 8px;}
+.member-name{font-size:13px;font-weight:500;margin-bottom:2px;}
+.member-age{font-size:11px;color:var(--text-muted);}
+.member-relation{font-size:11px;color:var(--gold);margin-top:2px;}
+.tree-children{display:flex;gap:16px;justify-content:center;position:relative;padding-top:20px;}
+.tree-children::before{content:'';position:absolute;top:0;left:50%;right:50%;height:20px;border-left:2px solid var(--border);}
+.tree-children-inner{display:flex;gap:16px;position:relative;}
+.tree-children-inner::before{content:'';position:absolute;top:0;left:12%;right:12%;height:2px;background:var(--border);}
+.tree-child-wrap{display:flex;flex-direction:column;align-items:center;}
+.tree-child-wire{height:20px;width:2px;background:var(--border);margin:0 auto;}
+.lineage-view{display:flex;align-items:flex-start;padding:16px 0;min-width:max-content;}
+.lineage-node{display:flex;align-items:center;flex-shrink:0;}
+.lineage-card{display:flex;flex-direction:column;align-items:center;min-width:96px;}
+.lineage-card:hover .l-avatar{border-color:var(--gold-light);box-shadow:0 0 16px var(--gold-glow);}
+.l-avatar{width:48px;height:48px;border-radius:50%;background:var(--surface2);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Amiri',serif;font-size:16px;color:var(--gold-light);margin-bottom:6px;transition:all 0.2s;}
+.l-name{font-family:'Amiri',serif;font-size:12px;color:var(--text);text-align:center;}
+.l-gen{font-size:10px;color:var(--text-muted);margin-top:2px;}
+.lineage-arrow{color:var(--gold);font-size:14px;padding:0 4px;opacity:0.4;margin-bottom:24px;}
+.members-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.member-list-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;gap:14px;align-items:flex-start;transition:all 0.2s;}
+.member-list-card:hover{border-color:var(--gold);}
+.member-list-avatar{width:50px;height:50px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;border:2px solid var(--gold);}
+.member-list-avatar.male{background:rgba(88,166,255,0.1);border-color:var(--blue);color:var(--blue);}
+.member-list-avatar.female{background:rgba(245,160,181,0.1);border-color:#f5a0b5;color:#f5a0b5;}
+.member-list-photo{width:50px;height:50px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--gold);}
+.member-list-name{font-size:15px;font-weight:600;margin-bottom:4px;}
+.member-list-meta{font-size:12px;color:var(--text-muted);line-height:1.9;}
+.member-list-meta span{display:block;}
+.member-actions{display:flex;gap:6px;margin-top:10px;}
+.stats-bar{display:flex;gap:14px;margin-bottom:24px;flex-wrap:wrap;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;display:flex;align-items:center;gap:12px;flex:1;min-width:120px;}
+.stat-icon{font-size:22px;}
+.stat-label{font-size:11px;color:var(--text-muted);}
+.stat-value{font-size:22px;font-weight:700;color:var(--gold-light);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;animation:fadeIn 0.2s;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:90%;max-width:480px;animation:slideUp 0.25s;max-height:90vh;overflow-y:auto;}
+.modal h2{font-family:'Amiri',serif;font-size:22px;color:var(--gold-light);margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.form-group{margin-bottom:16px;}
+.form-label{font-size:13px;color:var(--text-muted);margin-bottom:6px;display:block;}
+.form-input,.form-select{width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:14px;transition:border-color 0.2s;}
+.form-input:focus,.form-select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,0.1);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);}
+.photo-upload-label{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:var(--surface2);border:1px dashed var(--border);border-radius:8px;cursor:pointer;transition:border-color 0.2s;}
+.photo-upload-label:hover{border-color:var(--gold);}
+#photo-wrap{display:none;text-align:center;margin-bottom:10px;}
+#photo-wrap img{width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);display:block;margin:0 auto;}
+.detail-panel{position:fixed;left:0;top:0;bottom:0;width:300px;background:var(--surface);border-left:1px solid var(--border);z-index:100;padding:24px 20px;transform:translateX(-100%);transition:transform 0.3s;overflow-y:auto;}
+.detail-panel.open{transform:translateX(0);box-shadow:4px 0 32px rgba(0,0,0,0.5);}
+.detail-close{position:absolute;top:14px;left:14px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;padding:4px;}
+.detail-big-photo{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);display:block;margin:16px auto 14px;}
+.detail-avatar{width:72px;height:72px;border-radius:50%;margin:16px auto 14px;display:flex;align-items:center;justify-content:center;font-family:'Amiri',serif;font-size:28px;background:var(--gold-dim);border:3px solid var(--gold);color:var(--gold-light);}
+.detail-name{font-family:'Amiri',serif;font-size:22px;text-align:center;color:var(--gold-light);margin-bottom:4px;}
+.detail-sub{text-align:center;color:var(--text-muted);font-size:13px;margin-bottom:18px;}
+.detail-info{border-top:1px solid var(--border);padding-top:14px;}
+.detail-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(42,51,68,0.6);font-size:13px;}
+.detail-row .label{color:var(--text-muted);}
+.detail-row .value{color:var(--text);font-weight:500;}
+.view-toggle{display:flex;gap:8px;margin-bottom:20px;}
+.toggle-btn{padding:7px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-family:'Tajawal',sans-serif;font-size:13px;transition:all 0.2s;}
+.toggle-btn.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold);}
+.search-wrap{display:flex;gap:10px;margin-bottom:20px;align-items:center;}
+.search-box{position:relative;flex:1;}
+.search-box input{width:100%;padding:10px 14px 10px 40px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:14px;}
+.search-box input:focus{outline:none;border-color:var(--gold);}
+.search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-muted);}
+.empty-state .ei{font-size:54px;margin-bottom:14px;opacity:0.5;}
+.empty-state h3{font-size:17px;color:var(--text);margin-bottom:8px;}
+.empty-state p{font-size:14px;margin-bottom:20px;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--surface2);border:1px solid var(--gold);color:var(--text);padding:11px 22px;border-radius:8px;font-size:14px;z-index:9999;transition:transform 0.3s;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+@media(max-width:600px){header{padding:14px;flex-wrap:wrap;gap:10px;margin-top:26px;}.view{padding:14px;}.form-row{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div id="sync-bar" class="syncing">⏳ جاري الاتصال بقاعدة البيانات...</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌳</div>
+    <div>
+      <h1>شجرة القبيسي</h1>
+      <div class="logo-sub">من ذرية تميم بن مُرّ</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-primary" onclick="openAddModal()">+ إضافة فرد</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tab active" onclick="switchTab('tree',this)">🌳 الشجرة</div>
+  <div class="tab" onclick="switchTab('list',this)">👥 الأفراد</div>
+  <div class="tab" onclick="switchTab('lineage',this)">📜 سلسلة النسب</div>
+  <div class="tab" onclick="switchTab('stats',this)">📊 الإحصاءات</div>
+</nav>
+
+<div id="view-tree" class="view active">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+    <div class="view-toggle">
+      <button class="toggle-btn active" onclick="setTreeMode('descendants',this)">أبناء العائلة</button>
+      <button class="toggle-btn" onclick="setTreeMode('ancestors',this)">شجرة الأجداد</button>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="openAddModal()">+ إضافة فرد</button>
+  </div>
+  <div id="tree-container"><div id="tree-render"></div></div>
+</div>
+
+<div id="view-list" class="view">
+  <div class="search-wrap">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="ابحث عن اسم..." oninput="renderList(this.value)">
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ إضافة</button>
+  </div>
+  <div id="members-grid" class="members-grid"></div>
+</div>
+
+<div id="view-lineage" class="view"><div id="lineage-content"></div></div>
+
+<div id="view-stats" class="view">
+  <div class="stats-bar" id="stats-bar"></div>
+  <div id="stats-detail"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="member-modal">
+  <div class="modal">
+    <h2 id="modal-title">إضافة فرد</h2>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">الاسم الأول *</label><input class="form-input" id="f-fname" placeholder="مثال: محمد"></div>
+      <div class="form-group"><label class="form-label">اسم الأب</label><input class="form-input" id="f-mname" placeholder="اختياري"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">الجنس</label><select class="form-select" id="f-gender"><option value="male">ذكر</option><option value="female">أنثى</option></select></div>
+      <div class="form-group"><label class="form-label">الحالة</label><select class="form-select" id="f-status"><option value="alive">على قيد الحياة</option><option value="deceased">متوفى</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">تاريخ الميلاد</label><input class="form-input" id="f-dob" type="date"></div>
+      <div class="form-group"><label class="form-label">صلة القرابة</label><input class="form-input" id="f-relation" placeholder="الجد، العم، الابن..."></div>
+    </div>
+    <div class="form-group"><label class="form-label">الوالد في الشجرة</label><select class="form-select" id="f-parent"><option value="">— بدون والد (جذر) —</option></select></div>
+    <div class="form-group"><label class="form-label">ملاحظات</label><input class="form-input" id="f-notes" placeholder="معلومة إضافية..."></div>
+    <div class="form-group">
+      <label class="form-label">الصورة الشخصية</label>
+      <div id="photo-wrap">
+        <img id="photo-preview" src="" alt="">
+        <button type="button" onclick="clearPhoto()" style="display:block;margin:6px auto 0;background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;font-family:'Tajawal',sans-serif;">✕ حذف الصورة</button>
+      </div>
+      <label class="photo-upload-label">
+        <span style="font-size:18px;">📷</span>
+        <span style="font-size:13px;color:var(--text-muted);">اضغط لاختيار صورة</span>
+        <input type="file" id="f-photo" accept="image/*" style="display:none" onchange="previewPhoto(event)">
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveMember()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div class="detail-panel" id="detail-panel">
+  <button class="detail-close" onclick="closeDetail()">✕</button>
+  <div id="detail-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD66hO4xvn3_K7mq-obsfo0YmtrWR-M6Pc",
+  authDomain: "alqubaysi190.firebaseapp.com",
+  databaseURL: "https://alqubaysi190-default-rtdb.firebaseio.com",
+  projectId: "alqubaysi190",
+  storageBucket: "alqubaysi190.firebasestorage.app",
+  messagingSenderId: "89996393270",
+  appId: "1:89996393270:web:f4addc8372027844671197"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const membersRef = ref(db, 'members');
+
+// ── SYNC STATUS ──
+function syncStatus(state, msg) {
+  const bar = document.getElementById('sync-bar');
+  bar.className = state;
+  bar.textContent = msg;
+  if (state === 'ok') setTimeout(() => { bar.className = ''; }, 3000);
+}
+
+// ── LISTEN FOR CHANGES (real-time) ──
+onValue(membersRef, (snapshot) => {
+  const data = snapshot.val();
+  members = data ? Object.values(data) : [];
+  syncStatus('ok', '✅ متزامن مع جميع الأجهزة');
+  renderAll();
+}, (error) => {
+  syncStatus('err', '❌ خطأ في الاتصال — ' + error.message);
+});
+
+// ── EXPOSE SAVE/DELETE TO WINDOW ──
+window._fbSave = function(member) {
+  syncStatus('syncing', '⏳ جاري الحفظ...');
+  set(ref(db, 'members/' + member.id), member)
+    .then(() => syncStatus('ok', '✅ تم الحفظ وتزامن مع جميع الأجهزة'))
+    .catch(e => syncStatus('err', '❌ فشل الحفظ: ' + e.message));
+};
+
+window._fbDelete = function(id) {
+  syncStatus('syncing', '⏳ جاري الحذف...');
+  remove(ref(db, 'members/' + id))
+    .then(() => syncStatus('ok', '✅ تم الحذف'))
+    .catch(e => syncStatus('err', '❌ فشل الحذف: ' + e.message));
+};
+
+syncStatus('syncing', '⏳ جاري الاتصال...');
+</script>
+
+<script>
+const LINEAGE = ["مشرف","عمر","معضاد","ريس","زاخر","محمد","علوي","وهيب","قاسم","موسى","مسعود","عقبة","سنيع","نهشل","شداد","زهير","شهاب","ربيعة","أبي سود","مالك","حنظلة","مالك","زيد مناة","تميم"];
+let members = [];
+let treeMode = 'descendants', editingId = null;
+
+function genId() { return 'mbr_' + Date.now() + '_' + Math.random().toString(36).slice(2,6); }
+function calcAge(dob) {
+  if (!dob) return null;
+  const b = new Date(dob), n = new Date();
+  let a = n.getFullYear() - b.getFullYear();
+  if (n.getMonth() < b.getMonth() || (n.getMonth() === b.getMonth() && n.getDate() < b.getDate())) a--;
+  return a;
+}
+function sName(m) { return [m.fname, m.mname].filter(Boolean).join(' '); }
+function initial(m) { return (m.fname || '?').charAt(0); }
+
+function setTreeMode(mode, el) {
+  treeMode = mode;
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTree();
+}
+
+function renderAll() { renderTree(); renderList(); renderLineage(); renderStats(); }
+
+function makeCardAvatar(m) {
+  if (m.photo) { const img = document.createElement('img'); img.src = m.photo; img.className = 'member-photo'; return img; }
+  const div = document.createElement('div');
+  div.className = 'member-avatar ' + (m.gender === 'female' ? 'female' : 'male');
+  div.textContent = initial(m); return div;
+}
+
+function renderTree() {
+  const c = document.getElementById('tree-render');
+  if (treeMode === 'ancestors') { renderAncestors(c); return; }
+  if (!members.length) {
+    c.innerHTML = '<div class="empty-state"><div class="ei">🌱</div><h3>أضف أول فرد في العائلة</h3><button class="btn btn-primary" onclick="openAddModal()">+ إضافة أول فرد</button></div>';
+    return;
+  }
+  const roots = members.filter(m => !m.parentId || !members.find(p => p.id === m.parentId));
+  c.innerHTML = '';
+  function buildNode(m) {
+    const children = members.filter(x => x.parentId === m.id);
+    const age = calcAge(m.dob);
+    const nd = document.createElement('div'); nd.className = 'tree-node';
+    const card = document.createElement('div'); card.className = 'member-card';
+    card.appendChild(makeCardAvatar(m));
+    const nm = document.createElement('div'); nm.className = 'member-name'; nm.textContent = sName(m); card.appendChild(nm);
+    if (age !== null) { const ag = document.createElement('div'); ag.className = 'member-age'; ag.textContent = age + ' سنة'; card.appendChild(ag); }
+    if (m.relation) { const rl = document.createElement('div'); rl.className = 'member-relation'; rl.textContent = m.relation; card.appendChild(rl); }
+    card.onclick = () => showDetail(m.id); nd.appendChild(card);
+    if (children.length) {
+      const conn = document.createElement('div'); conn.className = 'tree-node-connector'; nd.appendChild(conn);
+      const cw = document.createElement('div'); cw.className = 'tree-children';
+      const ci = document.createElement('div'); ci.className = 'tree-children-inner';
+      children.forEach(child => {
+        const cWrap = document.createElement('div'); cWrap.className = 'tree-child-wrap';
+        const wire = document.createElement('div'); wire.className = 'tree-child-wire';
+        cWrap.appendChild(wire); cWrap.appendChild(buildNode(child)); ci.appendChild(cWrap);
+      });
+      cw.appendChild(ci); nd.appendChild(cw);
+    }
+    return nd;
+  }
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;gap:48px;justify-content:center;flex-wrap:wrap;';
+  roots.forEach(r => wrap.appendChild(buildNode(r))); c.appendChild(wrap);
+}
+
+function renderAncestors(c) {
+  c.innerHTML = '';
+  const lv = document.createElement('div'); lv.className = 'lineage-view';
+  LINEAGE.forEach((name, i) => {
+    const node = document.createElement('div'); node.className = 'lineage-node';
+    const card = document.createElement('div'); card.className = 'lineage-card';
+    const av = document.createElement('div'); av.className = 'l-avatar'; av.textContent = name.charAt(0);
+    const nm = document.createElement('div'); nm.className = 'l-name'; nm.textContent = name;
+    const gn = document.createElement('div'); gn.className = 'l-gen'; gn.textContent = 'الجد ' + (i+1);
+    card.append(av, nm, gn); node.appendChild(card);
+    if (i < LINEAGE.length - 1) { const ar = document.createElement('div'); ar.className = 'lineage-arrow'; ar.textContent = '←'; node.appendChild(ar); }
+    lv.appendChild(node);
+  }); c.appendChild(lv);
+}
+
+function renderList(search) {
+  search = search || '';
+  const g = document.getElementById('members-grid');
+  const f = members.filter(m => sName(m).includes(search) || (m.relation||'').includes(search));
+  if (!f.length) { g.innerHTML = '<div class="empty-state"><div class="ei">' + (search?'🔍':'👥') + '</div><h3>' + (search?'لا نتائج':'لا يوجد أفراد بعد') + '</h3>' + (!search?'<button class="btn btn-primary" onclick="openAddModal()">+ إضافة فرد</button>':'') + '</div>'; return; }
+  g.innerHTML = '';
+  f.forEach(function(m) {
+    const age = calcAge(m.dob);
+    const parent = m.parentId ? members.find(p => p.id === m.parentId) : null;
+    const card = document.createElement('div'); card.className = 'member-list-card';
+    if (m.photo) { const img = document.createElement('img'); img.src = m.photo; img.className = 'member-list-photo'; card.appendChild(img); }
+    else { const av = document.createElement('div'); av.className = 'member-list-avatar ' + (m.gender==='female'?'female':'male'); av.textContent = initial(m); card.appendChild(av); }
+    const info = document.createElement('div'); info.style.flex = '1';
+    info.innerHTML = '<div class="member-list-name">' + sName(m) + '</div><div class="member-list-meta">'
+      + (m.relation?'<span>🔗 '+m.relation+'</span>':'') + (age!==null?'<span>🎂 '+age+' سنة</span>':'')
+      + (parent?'<span>👤 '+sName(parent)+'</span>':'')
+      + '<span>'+(m.gender==='female'?'أنثى':'ذكر')+' · '+(m.status==='alive'?'حي':'متوفى')+'</span></div>'
+      + '<div class="member-actions"><button class="btn btn-ghost btn-sm" onclick="showDetail(\''+m.id+'\')">👁️</button>'
+      + '<button class="btn btn-ghost btn-sm" onclick="openEditModal(\''+m.id+'\')">✏️</button>'
+      + '<button class="btn btn-danger btn-sm" onclick="deleteMember(\''+m.id+'\')">🗑️</button></div>';
+    card.appendChild(info); g.appendChild(card);
+  });
+}
+
+function renderLineage() {
+  const el = document.getElementById('lineage-content'); if (!el) return;
+  let html = '<div style="background:linear-gradient(135deg,var(--surface),rgba(201,168,76,0.04));border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:var(--radius);padding:24px;margin-bottom:16px;"><h3 style="font-family:\'Amiri\',serif;color:var(--gold-light);font-size:20px;margin-bottom:6px;">🏛️ سلسلة نسب القبيسي</h3><p style="font-size:13px;color:var(--text-muted);">من مشرف وصولاً إلى تميم — '+LINEAGE.length+' جيلاً موثّقاً</p></div>';
+  html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;"><h4 style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">السلسلة كاملةً</h4><div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px;">';
+  LINEAGE.forEach((name,i) => { html += '<span style="background:var(--surface2);border:1px solid var(--gold);border-radius:6px;padding:5px 12px;font-family:\'Amiri\',serif;font-size:15px;color:var(--gold-light);">'+name+'</span>'; if(i<LINEAGE.length-1) html+='<span style="color:var(--text-muted);font-size:12px;padding:0 2px;">ابن</span>'; });
+  html += '</div></div><div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;"><h4 style="color:var(--text-muted);font-size:13px;margin-bottom:14px;">النص الكامل</h4><p style="font-family:\'Amiri\',serif;font-size:17px;line-height:2.6;color:var(--text);">'
+    + LINEAGE.map((n,i) => i===0?'<span style="color:var(--gold-light);font-size:21px;font-weight:700;">'+n+'</span>':'<span style="color:var(--text-muted);font-size:13px;"> ابن </span>'+n).join('') + '</p></div>';
+  el.innerHTML = html;
+}
+
+function renderStats() {
+  const bar = document.getElementById('stats-bar'), det = document.getElementById('stats-detail');
+  const total=members.length, males=members.filter(m=>m.gender==='male').length, females=members.filter(m=>m.gender==='female').length;
+  const wb=members.filter(m=>m.dob);
+  const avgAge=wb.length?Math.round(wb.reduce((s,m)=>s+(calcAge(m.dob)||0),0)/wb.length):null;
+  function depth(id){const m=members.find(x=>x.id===id);if(!m||!m.parentId)return 0;return 1+depth(m.parentId);}
+  const maxGen=members.length?Math.max.apply(null,members.map(m=>depth(m.id)))+1:0;
+  bar.innerHTML=[{i:'👥',l:'أفراد العائلة',v:total},{i:'♂',l:'ذكور',v:males},{i:'♀',l:'إناث',v:females},{i:'🌳',l:'أجيال',v:maxGen},{i:'📜',l:'أجداد موثّقون',v:LINEAGE.length},{i:'🎂',l:'متوسط العمر',v:avgAge!==null?avgAge+' سنة':'—'}].map(s=>'<div class="stat-card"><div class="stat-icon">'+s.i+'</div><div><div class="stat-label">'+s.l+'</div><div class="stat-value">'+s.v+'</div></div></div>').join('');
+  const today=new Date();
+  const upcoming=members.filter(m=>m.dob&&m.status==='alive').map(m=>{const d=new Date(m.dob);let next=new Date(today.getFullYear(),d.getMonth(),d.getDate());if(next<today)next.setFullYear(today.getFullYear()+1);return Object.assign({},m,{diff:Math.ceil((next-today)/864e5)});}).filter(m=>m.diff<=30).sort((a,b)=>a.diff-b.diff);
+  det.innerHTML=upcoming.length?'<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;"><h3 style="font-family:\'Amiri\',serif;color:var(--gold-light);margin-bottom:14px;">🎂 مناسبات قادمة</h3>'+upcoming.map(m=>'<div class="detail-row"><span class="label">'+sName(m)+'</span><span class="value">'+(m.diff===0?'🎉 اليوم!':'خلال '+m.diff+' يوم')+'</span></div>').join('')+'</div>':'';
+}
+
+function previewPhoto(e) {
+  const file=e.target.files[0]; if(!file) return;
+  // compress image before saving
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    const img=new Image();
+    img.onload=function(){
+      const canvas=document.createElement('canvas');
+      const MAX=400; let w=img.width, h=img.height;
+      if(w>h){if(w>MAX){h=h*(MAX/w);w=MAX;}}else{if(h>MAX){w=w*(MAX/h);h=MAX;}}
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const compressed=canvas.toDataURL('image/jpeg',0.7);
+      document.getElementById('photo-preview').src=compressed;
+      document.getElementById('photo-wrap').style.display='block';
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function clearPhoto() {
+  document.getElementById('photo-wrap').style.display='none';
+  document.getElementById('photo-preview').src='';
+  document.getElementById('f-photo').value='';
+}
+
+function openAddModal(parentId) {
+  parentId=parentId||null; editingId=null;
+  document.getElementById('modal-title').textContent='إضافة فرد جديد';
+  ['f-fname','f-mname','f-notes','f-relation'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-gender').value='male';
+  document.getElementById('f-status').value='alive';
+  document.getElementById('f-dob').value='';
+  clearPhoto(); populateParentSel(null,parentId);
+  document.getElementById('member-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('f-fname').focus(),100);
+}
+
+function openEditModal(id) {
+  const m=members.find(x=>x.id===id); if(!m) return;
+  editingId=id;
+  document.getElementById('modal-title').textContent='تعديل بيانات الفرد';
+  document.getElementById('f-fname').value=m.fname||'';
+  document.getElementById('f-mname').value=m.mname||'';
+  document.getElementById('f-gender').value=m.gender||'male';
+  document.getElementById('f-status').value=m.status||'alive';
+  document.getElementById('f-dob').value=m.dob||'';
+  document.getElementById('f-relation').value=m.relation||'';
+  document.getElementById('f-notes').value=m.notes||'';
+  clearPhoto();
+  if(m.photo){document.getElementById('photo-preview').src=m.photo;document.getElementById('photo-wrap').style.display='block';}
+  populateParentSel(id,m.parentId);
+  document.getElementById('member-modal').classList.add('open');
+}
+
+function populateParentSel(excludeId,selectedId) {
+  const sel=document.getElementById('f-parent');
+  sel.innerHTML='<option value="">— بدون والد (جذر) —</option>';
+  members.filter(m=>m.id!==excludeId).forEach(m=>{const o=document.createElement('option');o.value=m.id;o.textContent=sName(m);if(m.id===selectedId)o.selected=true;sel.appendChild(o);});
+}
+
+function closeModal() { document.getElementById('member-modal').classList.remove('open'); }
+
+function saveMember() {
+  const fname=document.getElementById('f-fname').value.trim();
+  if(!fname){showToast('⚠️ الاسم مطلوب');return;}
+  const pw=document.getElementById('photo-wrap');
+  const pi=document.getElementById('photo-preview');
+  let photo=null;
+  if(pw.style.display!=='none'&&pi.src&&pi.src.indexOf('data:')===0){photo=pi.src;}
+  else if(editingId){const ex=members.find(m=>m.id===editingId);photo=ex?(ex.photo||null):null;}
+  const data={
+    id:editingId||genId(), fname, mname:document.getElementById('f-mname').value.trim(),
+    gender:document.getElementById('f-gender').value, status:document.getElementById('f-status').value,
+    dob:document.getElementById('f-dob').value, relation:document.getElementById('f-relation').value.trim(),
+    notes:document.getElementById('f-notes').value.trim(), photo:photo,
+    parentId:document.getElementById('f-parent').value||null,
+    createdAt:editingId?((members.find(m=>m.id===editingId)||{}).createdAt||Date.now()):Date.now()
+  };
+  // Remove null values for Firebase
+  Object.keys(data).forEach(k=>{if(data[k]===null||data[k]==='')delete data[k];});
+  if(window._fbSave) window._fbSave(data);
+  closeModal();
+  showToast(editingId?'✅ جاري التحديث...':'✅ جاري الإضافة...');
+}
+
+function deleteMember(id) {
+  if(!confirm('حذف هذا الفرد؟'))return;
+  if(window._fbDelete) window._fbDelete(id);
+  closeDetail();
+}
+
+function showDetail(id) {
+  const m=members.find(x=>x.id===id); if(!m) return;
+  const age=calcAge(m.dob);
+  const parent=m.parentId?members.find(p=>p.id===m.parentId):null;
+  const children=members.filter(c=>c.parentId===id);
+  const gc=m.gender==='female'?'female':'male';
+  const panel=document.getElementById('detail-content'); panel.innerHTML='';
+  if(m.photo){const img=document.createElement('img');img.src=m.photo;img.className='detail-big-photo';panel.appendChild(img);}
+  else{const av=document.createElement('div');av.className='detail-avatar '+gc;av.textContent=initial(m);panel.appendChild(av);}
+  let html='<div class="detail-name">'+sName(m)+'</div>';
+  html+='<div class="detail-sub">'+(m.relation||'فرد العائلة')+' · القبيسي</div>';
+  html+='<div class="detail-info">';
+  if(m.dob)html+='<div class="detail-row"><span class="label">الميلاد</span><span class="value">'+m.dob+'</span></div>';
+  if(age!==null)html+='<div class="detail-row"><span class="label">العمر</span><span class="value">'+age+' سنة</span></div>';
+  html+='<div class="detail-row"><span class="label">الجنس</span><span class="value">'+(m.gender==='male'?'ذكر':'أنثى')+'</span></div>';
+  html+='<div class="detail-row"><span class="label">الحالة</span><span class="value">'+(m.status==='alive'?'حي':'متوفى')+'</span></div>';
+  if(parent)html+='<div class="detail-row"><span class="label">الوالد</span><span class="value">'+sName(parent)+'</span></div>';
+  if(children.length)html+='<div class="detail-row"><span class="label">الأبناء</span><span class="value">'+children.length+'</span></div>';
+  if(m.notes)html+='<div class="detail-row"><span class="label">ملاحظات</span><span class="value">'+m.notes+'</span></div>';
+  html+='</div><div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;">'
+    +'<button class="btn btn-outline btn-sm" onclick="openAddModal(\''+id+'\')">+ إضافة ابن</button>'
+    +'<button class="btn btn-ghost btn-sm" onclick="openEditModal(\''+id+'\')">✏️</button>'
+    +'<button class="btn btn-danger btn-sm" onclick="deleteMember(\''+id+'\')">🗑️</button></div>';
+  panel.innerHTML+=html;
+  document.getElementById('detail-panel').classList.add('open');
+}
+
+function closeDetail(){document.getElementById('detail-panel').classList.remove('open');}
+
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  el.classList.add('active'); document.getElementById('view-'+name).classList.add('active');
+  if(name==='list')renderList();
+  if(name==='lineage')renderLineage();
+  if(name==='stats')renderStats();
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeDetail();}});
+document.getElementById('member-modal').addEventListener('click',e=>{if(e.target===document.getElementById('member-modal'))closeModal();});
+</script>
+</body>
+</html>
